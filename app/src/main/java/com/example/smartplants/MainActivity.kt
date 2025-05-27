@@ -37,13 +37,13 @@ class MainActivity : AppCompatActivity() {
 
     private var mqttClient: MqttClient? = null
 
+    private val IP_SERVER = "172.20.10.2"
     // Configurazione MQTT
-    private val MQTT_BROKER = "tcp://192.168.1.72:1883"
+    private val MQTT_BROKER = "tcp://$IP_SERVER:1883"
     private val MQTT_TOPIC = "smart_plant/piante"
     private val MQTT_CLIENT_ID = "SmartPlantApp_${System.currentTimeMillis()}"
 
     // Configurazione InfluxDB 2.x
-    private val INFLUX_HOST = "192.168.1.72"
     private val INFLUX_PORT = "8086"
     private val INFLUX_TOKEN = "CwlazpO4oqRT4I1qYlAJ2E50rwv9JaJE00ENjqvcDSVgFE4vG1dGBO15uL2ug4B1aXE8GorqDPhRXYAAPUlSwg=="
     private val INFLUX_ORG = "scuola"
@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity() {
 
                 Log.d(TAG, "InfluxDB Flux Query: $fluxQuery")
 
-                val url = URL("http://$INFLUX_HOST:$INFLUX_PORT/api/v2/query?org=$INFLUX_ORG")
+                val url = URL("http://$IP_SERVER:$INFLUX_PORT/api/v2/query?org=$INFLUX_ORG")
                 val connection = url.openConnection() as HttpURLConnection
 
                 connection.apply {
@@ -278,7 +278,8 @@ class MainActivity : AppCompatActivity() {
     private fun testNetworkConnection(): Boolean {
         return try {
             val socket = Socket()
-            val address = InetSocketAddress("192.168.1.72", 1883)
+            val address = InetSocketAddress("$IP_SERVER" +
+                    "", 1883)
             socket.connect(address, 5000)
             socket.close()
             Log.d(TAG, "Network connection test: SUCCESS")
@@ -308,7 +309,7 @@ class MainActivity : AppCompatActivity() {
                         tvStatus.text = "Errore: Impossibile raggiungere il broker MQTT"
                         btnConnetti.isEnabled = true
                         Toast.makeText(this@MainActivity,
-                            "Verifica che il broker MQTT sia attivo su 192.168.1.72:1883",
+                            "Verifica che il broker MQTT sia attivo su $IP_SERVER:1883",
                             Toast.LENGTH_LONG).show()
                     }
                     return@launch
