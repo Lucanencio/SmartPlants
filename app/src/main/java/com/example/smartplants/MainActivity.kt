@@ -2,6 +2,7 @@ package com.example.smartplants
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -34,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnInvia: Button
     private lateinit var btnConnetti: Button
     private lateinit var tvStatus: TextView
+    private lateinit var statusIndicator: View
 
     private var mqttClient: MqttClient? = null
 
@@ -67,6 +69,7 @@ class MainActivity : AppCompatActivity() {
             btnInvia = findViewById(R.id.btn_invia)
             btnConnetti = findViewById(R.id.btn_connetti)
             tvStatus = findViewById(R.id.tv_status)
+            statusIndicator = findViewById(R.id.status_indicator)
             Log.d(TAG, "Views initialized successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing views", e)
@@ -90,6 +93,16 @@ class MainActivity : AppCompatActivity() {
 
         btnInvia.isEnabled = false
         tvStatus.text = "Non connesso - Clicca 'Connetti MQTT'"
+        updateStatusIndicator(false)
+    }
+
+    private fun updateStatusIndicator(isConnected: Boolean) {
+        val backgroundResource = if (isConnected) {
+            R.drawable.status_indicator_online
+        } else {
+            R.drawable.status_indicator_offline
+        }
+        statusIndicator.setBackgroundResource(backgroundResource)
     }
 
     private fun validateInput(nome: String, valore: String): Boolean {
@@ -278,8 +291,7 @@ class MainActivity : AppCompatActivity() {
     private fun testNetworkConnection(): Boolean {
         return try {
             val socket = Socket()
-            val address = InetSocketAddress("$IP_SERVER" +
-                    "", 1883)
+            val address = InetSocketAddress(IP_SERVER, 1883)
             socket.connect(address, 5000)
             socket.close()
             Log.d(TAG, "Network connection test: SUCCESS")
@@ -298,6 +310,7 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     tvStatus.text = "Testando connessione di rete..."
                     btnConnetti.isEnabled = false
+                    updateStatusIndicator(false)
                 }
 
                 val networkAvailable = withContext(Dispatchers.IO) {
@@ -308,6 +321,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         tvStatus.text = "Errore: Impossibile raggiungere il broker MQTT"
                         btnConnetti.isEnabled = true
+                        updateStatusIndicator(false)
                         Toast.makeText(this@MainActivity,
                             "Verifica che il broker MQTT sia attivo su $IP_SERVER:1883",
                             Toast.LENGTH_LONG).show()
@@ -317,6 +331,7 @@ class MainActivity : AppCompatActivity() {
 
                 runOnUiThread {
                     tvStatus.text = "Connessione MQTT in corso..."
+                    updateStatusIndicator(false)
                 }
 
                 mqttClient?.let { client ->
@@ -345,6 +360,7 @@ class MainActivity : AppCompatActivity() {
                             tvStatus.text = "Connessione persa: ${cause?.message ?: "Motivo sconosciuto"}"
                             btnConnetti.isEnabled = true
                             btnInvia.isEnabled = false
+                            updateStatusIndicator(false)
                         }
                     }
 
@@ -355,7 +371,7 @@ class MainActivity : AppCompatActivity() {
                     override fun deliveryComplete(token: IMqttDeliveryToken?) {
                         Log.d(TAG, "Message delivery complete")
                         runOnUiThread {
-                            Toast.makeText(this@MainActivity, "Messaggio inviato con successo!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MainActivity, "✅ Messaggio inviato con successo!", Toast.LENGTH_SHORT).show()
                         }
                     }
                 })
@@ -367,9 +383,11 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "MQTT Connection successful")
                 runOnUiThread {
                     tvStatus.text = "✅ Connesso al broker MQTT"
+                    btnConnetti.text = "Riconnetti"
                     btnConnetti.isEnabled = true
                     btnInvia.isEnabled = true
-                    Toast.makeText(this@MainActivity, "Connesso al broker MQTT!", Toast.LENGTH_SHORT).show()
+                    updateStatusIndicator(true)
+                    Toast.makeText(this@MainActivity, "✅ Connesso al broker MQTT!", Toast.LENGTH_SHORT).show()
                 }
 
             } catch (e: MqttException) {
@@ -386,6 +404,7 @@ class MainActivity : AppCompatActivity() {
                     tvStatus.text = "❌ $errorMsg"
                     btnConnetti.isEnabled = true
                     btnInvia.isEnabled = false
+                    updateStatusIndicator(false)
                     Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
@@ -394,6 +413,7 @@ class MainActivity : AppCompatActivity() {
                     tvStatus.text = "❌ Errore di connessione: ${e.message}"
                     btnConnetti.isEnabled = true
                     btnInvia.isEnabled = false
+                    updateStatusIndicator(false)
                     Toast.makeText(this@MainActivity, "Errore: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
@@ -402,7 +422,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun inviaConfigurazioneImpianto(nome: String, valore: Int) {
         if (mqttClient?.isConnected != true) {
-            Toast.makeText(this, "Non connesso al broker MQTT", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "❌ Non connesso al broker MQTT", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -414,7 +434,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val message = MqttMessage(payload.toString().toByteArray())
-                message.qos = 1 // Garantisce che il messaggio venga consegnato almeno una volta
+                message.qos = 1
 
                 withContext(Dispatchers.IO) {
                     mqttClient?.publish(MQTT_TOPIC, message)
@@ -423,12 +443,15 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "Message published successfully: $payload")
 
                 runOnUiThread {
-                    val successMessage = "✅ Configurazione creata per '$nome' (soglia: $valore%)"
+                    val successMessage = "🌱 Configurazione creata per '$nome' (soglia: $valore%)"
                     Toast.makeText(this@MainActivity, successMessage, Toast.LENGTH_LONG).show()
 
-                    // Pulisci i campi dopo l'invio
+                    // Pulisci i campi dopo l'invio con animazione
                     etNomePianta.text?.clear()
                     etValoreSoglia.text?.clear()
+
+                    // Focus sul primo campo per facilitare l'inserimento successivo
+                    etNomePianta.requestFocus()
                 }
 
             } catch (e: Exception) {
