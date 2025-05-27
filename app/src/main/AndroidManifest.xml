@@ -6,7 +6,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
     <!-- Permesso per connessioni HTTP non sicure (se necessario) -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
@@ -22,8 +21,9 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
+        <!-- HomeActivity come launcher principale -->
         <activity
-            android:name=".MainActivity"
+            android:name=".HomeActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -31,6 +31,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- MainActivity per configurazione piante -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
     </application>
 
