@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
 
     private var mqttClient: MqttClient? = null
 
-    private val IP_SERVER = "172.20.10.2"
+    private val IP_SERVER = "192.168.1.87"
     // Configurazione MQTT
     private val MQTT_BROKER = "tcp://$IP_SERVER:1883"
     private val MQTT_TOPIC = "smart_plant/piante"
@@ -382,12 +382,12 @@ class MainActivity : AppCompatActivity() {
 
                 Log.d(TAG, "MQTT Connection successful")
                 runOnUiThread {
-                    tvStatus.text = "✅ Connesso al broker MQTT"
+                    tvStatus.text = "Connesso al broker MQTT"
                     btnConnetti.text = "Riconnetti"
                     btnConnetti.isEnabled = true
                     btnInvia.isEnabled = true
                     updateStatusIndicator(true)
-                    Toast.makeText(this@MainActivity, "✅ Connesso al broker MQTT!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Connesso al broker MQTT!", Toast.LENGTH_SHORT).show()
                 }
 
             } catch (e: MqttException) {
