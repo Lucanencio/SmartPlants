@@ -23,14 +23,14 @@ class HomeActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "HomeActivity"
         // Configurazione server (stessa dell'altra activity)
-        private const val IP_SERVER = "192.168.1.87"
+        private const val IP_SERVER = "172.17.5.37"
         private const val INFLUX_PORT = "8086"
         private const val INFLUX_TOKEN = "CwlazpO4oqRT4I1qYlAJ2E50rwv9JaJE00ENjqvcDSVgFE4vG1dGBO15uL2ug4B1aXE8GorqDPhRXYAAPUlSwg=="
         private const val INFLUX_ORG = "scuola"
         private const val INFLUX_BUCKET = "smart_plant"
         // Configurazione MQTT - rimossa interpolazione dalla const val
         private const val MQTT_PORT = "1883"
-        private const val MQTT_TOPIC = "smart_plant/selected"
+        private const val MQTT_TOPIC = "smart_plant/piantaSelezionata"
 
         // Funzione per ottenere l'URL del broker MQTT
         private fun getMqttBroker(): String = "tcp://$IP_SERVER:$MQTT_PORT"
@@ -253,23 +253,58 @@ class HomeActivity : AppCompatActivity() {
         val plants = mutableListOf<String>()
         try {
             val lines = csvResponse.trim().split('\n')
-            if (lines.size > 1) {
-                val headers = lines[0].split(',')
-                val valueIndex = headers.indexOf("_value")
+            Log.d(TAG, "CSV Lines count: ${lines.size}")
 
-                if (valueIndex != -1) {
+            if (lines.size > 1) {
+                // Prima riga (header) - rimuovi virgole vuote iniziali
+                val headerLine = lines[0].trim(',')
+                val headers = headerLine.split(',')
+                Log.d(TAG, "Headers: $headers")
+                Log.d(TAG, "Headers raw bytes: ${headers.map { it.toByteArray().contentToString() }}")
+
+                // Cerca _value in diversi modi
+                var valueIndex = headers.indexOf("_value")
+                if (valueIndex == -1) {
+                    // Prova a cercare per contenuto (potrebbe esserci un carattere nascosto)
+                    valueIndex = headers.indexOfFirst { it.contains("value") }
+                    Log.d(TAG, "Searching for 'value' substring, found at index: $valueIndex")
+                }
+                if (valueIndex == -1) {
+                    // Fallback: assume che _value sia l'ultima colonna (posizione 6 in base al formato InfluxDB)
+                    valueIndex = 6
+                    Log.d(TAG, "Using fallback index 6 for _value column")
+                }
+
+                Log.d(TAG, "Value index: $valueIndex")
+
+                if (valueIndex >= 0 && valueIndex < headers.size) {
                     for (i in 1 until lines.size) {
-                        val values = lines[i].split(',')
-                        if (values.size > valueIndex && values[valueIndex].isNotEmpty()) {
-                            val plantName = values[valueIndex].trim('"')
-                            if (plantName.isNotEmpty() && !plants.contains(plantName)) {
-                                plants.add(plantName)
+                        val line = lines[i].trim()
+                        if (line.isNotEmpty()) {
+                            // Rimuovi virgole vuote iniziali anche dalle righe di dati
+                            val cleanLine = line.trim(',')
+                            val values = cleanLine.split(',')
+                            Log.d(TAG, "Processing line $i: $cleanLine -> values: $values")
+
+                            if (values.size > valueIndex && values[valueIndex].isNotEmpty()) {
+                                val plantName = values[valueIndex].trim().trim('"')
+                                Log.d(TAG, "Found plant name: '$plantName'")
+
+                                if (plantName.isNotEmpty() && !plants.contains(plantName)) {
+                                    plants.add(plantName)
+                                    Log.d(TAG, "Added plant: $plantName")
+                                }
                             }
                         }
                     }
+                } else {
+                    Log.e(TAG, "_value column not found in headers, valueIndex: $valueIndex")
                 }
+            } else {
+                Log.w(TAG, "CSV has no data rows")
             }
-            Log.d(TAG, "Parsed plants: $plants")
+
+            Log.d(TAG, "Final parsed plants: $plants")
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing CSV response", e)
         }
@@ -309,13 +344,7 @@ class HomeActivity : AppCompatActivity() {
 
             lifecycleScope.launch {
                 try {
-                    val payload = JSONObject().apply {
-                        put("selected_plant", selectedPlant)
-                        put("timestamp", System.currentTimeMillis())
-                        put("action", "plant_selected")
-                    }
-
-                    val message = MqttMessage(payload.toString().toByteArray())
+                    val message = MqttMessage(selectedPlant.toByteArray())
                     message.qos = 1
 
                     withContext(Dispatchers.IO) {

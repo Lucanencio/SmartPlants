@@ -26,7 +26,7 @@ import java.net.URL
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private const val TAG = "SmartPlants"
+        private const val TAG = "MainActivity"
     }
 
     // Riferimenti alle view
@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
 
     private var mqttClient: MqttClient? = null
 
-    private val IP_SERVER = "192.168.1.87"
+    private val IP_SERVER = "172.17.5.37"
     // Configurazione MQTT
     private val MQTT_BROKER = "tcp://$IP_SERVER:1883"
     private val MQTT_TOPIC = "smart_plant/piante"

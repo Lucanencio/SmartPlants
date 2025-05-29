@@ -28,8 +28,8 @@
                 android:layout_centerHorizontal="true"
                 android:layout_marginBottom="16dp"
                 android:src="@drawable/ic_plant"
-                android:tint="@android:color/white"
-                android:contentDescription="Smart Plants Icon" />
+                android:contentDescription="Smart Plants Icon"
+                app:tint="@android:color/white" />
 
             <!-- Titolo app -->
             <TextView
@@ -168,7 +168,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="20dp"
                     android:hint="Nome della pianta"
-                    app:startIconDrawable="@drawable/ic_local_florist"
+                    app:startIconDrawable="@drawable/ic_eco"
                     app:startIconTint="@color/primary_green">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -236,13 +236,13 @@
                     android:id="@+id/btn_invia"
                     style="@style/GreenGradientButton"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:text="Configura Pianta"
-                    android:textSize="16sp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:drawableStart="@drawable/ic_add_plant"
-                    android:drawableTint="@android:color/white"
                     android:drawablePadding="8dp"
-                    android:layout_marginTop="8dp" />
+                    android:drawableTint="@android:color/white"
+                    android:text="Configura Pianta"
+                    android:textSize="16sp" />
 
             </LinearLayout>
 
