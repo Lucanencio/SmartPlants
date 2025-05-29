@@ -65,11 +65,11 @@
                         android:layout_height="wrap_content"
                         android:layout_below="@id/tv_welcome"
                         android:layout_centerHorizontal="true"
+                        android:fontFamily="sans-serif"
+                        android:gravity="center"
                         android:text="Monitora e gestisci le tue piante"
                         android:textColor="#E8F5E8"
-                        android:textSize="14sp"
-                        android:fontFamily="sans-serif"
-                        android:gravity="center" />
+                        android:textSize="12sp" />
 
                 </RelativeLayout>
 
@@ -387,18 +387,5 @@
         </ScrollView>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-    <!-- Bottom Navigation -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:background="@color/background_white"
-        android:elevation="8dp"
-        app:menu="@menu/bottom_navigation_menu"
-        app:itemIconTint="@color/bottom_nav_color"
-        app:itemTextColor="@color/bottom_nav_color"
-        app:labelVisibilityMode="labeled" />
 
 </RelativeLayout>

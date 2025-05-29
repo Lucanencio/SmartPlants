@@ -52,11 +52,11 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/tv_app_title"
                 android:layout_centerHorizontal="true"
+                android:fontFamily="sans-serif"
+                android:gravity="center"
                 android:text="Monitora e gestisci le tue piante"
                 android:textColor="#E8F5E8"
-                android:textSize="16sp"
-                android:fontFamily="sans-serif"
-                android:gravity="center" />
+                android:textSize="12sp" />
 
         </RelativeLayout>
 
