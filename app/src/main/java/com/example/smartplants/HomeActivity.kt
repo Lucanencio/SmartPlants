@@ -7,6 +7,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.lifecycleScope
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,6 +53,9 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnSavePlant: Button
     private lateinit var tvSelectedPlant: TextView
 
+    // Elemento SwipeRefreshLayout
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+
     private var plantsList = mutableListOf<String>()
     private var plantsAdapter: ArrayAdapter<String>? = null
     private var mqttClient: MqttClient? = null
@@ -64,6 +68,7 @@ class HomeActivity : AppCompatActivity() {
         setupBottomNavigation()
         setupUI()
         setupPlantSelector()
+        setupSwipeRefresh()
         loadPlantsFromDatabase()
         connectToMqtt()
     }
@@ -81,6 +86,78 @@ class HomeActivity : AppCompatActivity() {
         spinnerPlants = findViewById(R.id.spinner_plants)
         btnSavePlant = findViewById(R.id.btn_save_plant)
         tvSelectedPlant = findViewById(R.id.tv_selected_plant)
+
+        // SwipeRefreshLayout
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout)
+    }
+
+    private fun setupSwipeRefresh() {
+        swipeRefreshLayout.setOnRefreshListener {
+            // Quando l'utente trascina verso il basso per aggiornare
+            Log.d(TAG, "Pull-to-refresh triggered")
+            refreshData()
+        }
+
+        // Personalizza i colori dell'indicatore di refresh
+        swipeRefreshLayout.setColorSchemeResources(
+            android.R.color.holo_green_dark,
+            android.R.color.holo_blue_dark,
+            android.R.color.holo_orange_dark
+        )
+    }
+
+    private fun refreshData() {
+        Log.d(TAG, "Refreshing plant data...")
+
+        // Mostra un messaggio di aggiornamento
+        Toast.makeText(this, "🔄 Aggiornamento piante...", Toast.LENGTH_SHORT).show()
+
+        lifecycleScope.launch {
+            try {
+                // Ricarica le piante dal database
+                val plants = withContext(Dispatchers.IO) {
+                    getPlantsFromInfluxDB()
+                }
+
+                runOnUiThread {
+                    if (plants.isNotEmpty()) {
+                        plantsList.clear()
+                        plantsList.addAll(plants)
+                        plantsAdapter?.notifyDataSetChanged()
+                        tvSelectedPlant.text = "Seleziona una pianta dal menu (aggiornato)"
+                        Log.d(TAG, "Refreshed ${plants.size} plants: $plants")
+
+                        // Mostra messaggio di successo
+                        Toast.makeText(this@HomeActivity,
+                            "✅ Aggiornate ${plants.size} piante!",
+                            Toast.LENGTH_SHORT).show()
+                    } else {
+                        tvSelectedPlant.text = "Nessuna pianta trovata nel database"
+                        Log.w(TAG, "No plants found in database after refresh")
+
+                        Toast.makeText(this@HomeActivity,
+                            "⚠️ Nessuna pianta trovata",
+                            Toast.LENGTH_SHORT).show()
+                    }
+
+                    // Nasconde l'indicatore di refresh
+                    swipeRefreshLayout.isRefreshing = false
+                }
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error refreshing plants from database", e)
+                runOnUiThread {
+                    tvSelectedPlant.text = "Errore nell'aggiornamento delle piante"
+
+                    Toast.makeText(this@HomeActivity,
+                        "❌ Errore aggiornamento: ${e.message}",
+                        Toast.LENGTH_LONG).show()
+
+                    // Nasconde l'indicatore di refresh anche in caso di errore
+                    swipeRefreshLayout.isRefreshing = false
+                }
+            }
+        }
     }
 
     private fun setupBottomNavigation() {
