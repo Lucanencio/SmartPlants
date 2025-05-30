@@ -22,7 +22,7 @@ class HomeActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "HomeActivity"
         // Configurazione server (stessa dell'altra activity)
-        private const val IP_SERVER = "172.17.5.37"
+        private const val IP_SERVER = "172.20.10.2"
         private const val INFLUX_PORT = "8086"
         private const val INFLUX_TOKEN = "CwlazpO4oqRT4I1qYlAJ2E50rwv9JaJE00ENjqvcDSVgFE4vG1dGBO15uL2ug4B1aXE8GorqDPhRXYAAPUlSwg=="
         private const val INFLUX_ORG = "scuola"
