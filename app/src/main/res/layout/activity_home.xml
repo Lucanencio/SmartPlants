@@ -149,123 +149,9 @@
 
                 </androidx.cardview.widget.CardView>
 
-                <!-- Sezione Statistiche -->
+                <!-- Sezione Dati Sensori -->
                 <androidx.cardview.widget.CardView
-                    android:id="@+id/card_stats"
-                    style="@style/EcoCard"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
-                    android:layout_marginBottom="16dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Panoramica"
-                            android:textSize="18sp"
-                            android:textColor="@color/text_primary"
-                            android:fontFamily="sans-serif-medium"
-                            android:layout_marginBottom="16dp" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:weightSum="3">
-
-                            <!-- Piante Totali -->
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:gravity="center">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0"
-                                    android:textSize="24sp"
-                                    android:textColor="@color/primary_green"
-                                    android:fontFamily="sans-serif-light"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Piante"
-                                    android:textSize="12sp"
-                                    android:textColor="@color/text_secondary" />
-
-                            </LinearLayout>
-
-                            <!-- Connesse -->
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:gravity="center">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0"
-                                    android:textSize="24sp"
-                                    android:textColor="@color/success_green"
-                                    android:fontFamily="sans-serif-light"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Connesse"
-                                    android:textSize="12sp"
-                                    android:textColor="@color/text_secondary" />
-
-                            </LinearLayout>
-
-                            <!-- Allarmi -->
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:gravity="center">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0"
-                                    android:textSize="24sp"
-                                    android:textColor="@color/error_red"
-                                    android:fontFamily="sans-serif-light"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Allarmi"
-                                    android:textSize="12sp"
-                                    android:textColor="@color/text_secondary" />
-
-                            </LinearLayout>
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Piante Recenti -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/card_recent_plants"
+                    android:id="@+id/card_sensor_data"
                     style="@style/EcoCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -289,29 +175,119 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Piante Recenti"
+                                android:text="Dati Sensori"
                                 android:textSize="18sp"
                                 android:textColor="@color/text_primary"
                                 android:fontFamily="sans-serif-medium" />
 
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@drawable/ic_local_florist"
-                                app:tint="@color/primary_green" />
+                            <TextView
+                                android:id="@+id/tv_last_update"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="In attesa..."
+                                android:textSize="11sp"
+                                android:textColor="@color/text_secondary"
+                                android:fontFamily="sans-serif" />
 
                         </LinearLayout>
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Nessuna pianta configurata ancora"
-                            android:textSize="14sp"
-                            android:textColor="@color/text_secondary"
-                            android:fontFamily="sans-serif"
-                            android:gravity="center"
-                            android:layout_gravity="center"
-                            android:padding="24dp" />
+                            android:orientation="horizontal"
+                            android:weightSum="3">
+
+                            <!-- Umidità del Terreno -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="8dp">
+
+                                <TextView
+                                    android:id="@+id/tv_soil_humidity"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="24sp"
+                                    android:textColor="@color/primary_green"
+                                    android:fontFamily="sans-serif-light"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Umidità Terreno"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/text_secondary"
+                                    android:gravity="center"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                            <!-- Umidità dell'Aria -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="8dp">
+
+                                <TextView
+                                    android:id="@+id/tv_air_humidity"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="24sp"
+                                    android:textColor="@color/success_green"
+                                    android:fontFamily="sans-serif-light"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Umidità Aria"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/text_secondary"
+                                    android:gravity="center"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                            <!-- Temperatura -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="8dp">
+
+                                <TextView
+                                    android:id="@+id/tv_temperature"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="--"
+                                    android:textSize="24sp"
+                                    android:textColor="@color/error_red"
+                                    android:fontFamily="sans-serif-light"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Temperatura"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/text_secondary"
+                                    android:gravity="center"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
 
                     </LinearLayout>
 

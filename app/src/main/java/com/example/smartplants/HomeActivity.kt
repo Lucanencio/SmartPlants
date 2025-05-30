@@ -13,10 +13,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.*
 
 class HomeActivity : AppCompatActivity() {
     companion object {
@@ -29,7 +32,8 @@ class HomeActivity : AppCompatActivity() {
         private const val INFLUX_BUCKET = "smart_plant"
         // Configurazione MQTT - rimossa interpolazione dalla const val
         private const val MQTT_PORT = "1883"
-        private const val MQTT_TOPIC = "smart_plant/piantaSelezionata"
+        private const val MQTT_TOPIC_SELECTION = "smart_plant/piantaSelezionata"
+        private const val MQTT_TOPIC_SENSORS = "smart_plant/dati_sensori"
 
         // Funzione per ottenere l'URL del broker MQTT
         private fun getMqttBroker(): String = "tcp://$IP_SERVER:$MQTT_PORT"
@@ -40,15 +44,20 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var tvWelcome: TextView
     private lateinit var tvSubtitle: TextView
-    private lateinit var cardStats: CardView
-    private lateinit var cardRecentPlants: CardView
     private lateinit var cardQuickActions: CardView
 
-    // Nuovi elementi per la selezione piante
+    // Elementi per la selezione piante
     private lateinit var cardPlantSelector: CardView
     private lateinit var spinnerPlants: Spinner
     private lateinit var btnSavePlant: Button
     private lateinit var tvSelectedPlant: TextView
+
+    // Elementi per i dati sensori
+    private lateinit var cardSensorData: CardView
+    private lateinit var tvSoilHumidity: TextView
+    private lateinit var tvAirHumidity: TextView
+    private lateinit var tvTemperature: TextView
+    private lateinit var tvLastUpdate: TextView
 
     // Elemento SwipeRefreshLayout
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
@@ -72,15 +81,20 @@ class HomeActivity : AppCompatActivity() {
     private fun initViews() {
         tvWelcome = findViewById(R.id.tv_welcome)
         tvSubtitle = findViewById(R.id.tv_subtitle)
-        cardStats = findViewById(R.id.card_stats)
-        cardRecentPlants = findViewById(R.id.card_recent_plants)
         cardQuickActions = findViewById(R.id.card_quick_actions)
 
-        // Nuovi elementi
+        // Elementi selezione piante
         cardPlantSelector = findViewById(R.id.card_plant_selector)
         spinnerPlants = findViewById(R.id.spinner_plants)
         btnSavePlant = findViewById(R.id.btn_save_plant)
         tvSelectedPlant = findViewById(R.id.tv_selected_plant)
+
+        // Elementi dati sensori
+        cardSensorData = findViewById(R.id.card_sensor_data)
+        tvSoilHumidity = findViewById(R.id.tv_soil_humidity)
+        tvAirHumidity = findViewById(R.id.tv_air_humidity)
+        tvTemperature = findViewById(R.id.tv_temperature)
+        tvLastUpdate = findViewById(R.id.tv_last_update)
 
         // SwipeRefreshLayout
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout)
@@ -131,7 +145,7 @@ class HomeActivity : AppCompatActivity() {
                         Log.w(TAG, "No plants found in database after refresh")
 
                         Toast.makeText(this@HomeActivity,
-                            "⚠️ Nessuna pianta trovata",
+                            "⚠ Nessuna pianta trovata",
                             Toast.LENGTH_SHORT).show()
                     }
 
@@ -167,12 +181,9 @@ class HomeActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        cardStats.setOnClickListener {
-            // Qui in futuro si potranno aggiungere statistiche dettagliate
-        }
-
-        cardRecentPlants.setOnClickListener {
-            // Qui in futuro si potrà mostrare la lista delle piante
+        cardSensorData.setOnClickListener {
+            // Qui in futuro si potranno aggiungere dettagli sensori
+            Toast.makeText(this, "Dettagli sensori in arrivo...", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -364,7 +375,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun connectToMqtt() {
-        Log.d(TAG, "Connecting to MQTT for plant selection...")
+        Log.d(TAG, "Connecting to MQTT for plant selection and sensor data...")
 
         lifecycleScope.launch {
             try {
@@ -380,11 +391,95 @@ class HomeActivity : AppCompatActivity() {
                         maxInflight = 10
                     }
 
+                    // Setup callback per messaggi ricevuti
+                    mqttClient?.setCallback(object : MqttCallback {
+                        override fun connectionLost(cause: Throwable?) {
+                            Log.w(TAG, "MQTT connection lost", cause)
+                            runOnUiThread {
+                                tvLastUpdate.text = "Connessione persa"
+                            }
+                        }
+
+                        override fun messageArrived(topic: String?, message: MqttMessage?) {
+                            Log.d(TAG, "MQTT message arrived on topic: $topic")
+                            message?.let { msg ->
+                                val payload = String(msg.payload)
+                                Log.d(TAG, "MQTT payload: $payload")
+
+                                when (topic) {
+                                    MQTT_TOPIC_SENSORS -> {
+                                        handleSensorData(payload)
+                                    }
+                                }
+                            }
+                        }
+
+                        override fun deliveryComplete(token: IMqttDeliveryToken?) {
+                            Log.d(TAG, "MQTT delivery complete")
+                        }
+                    })
+
                     mqttClient?.connect(connOpts)
-                    Log.d(TAG, "MQTT Connected successfully for plant selection")
+                    Log.d(TAG, "MQTT Connected successfully")
+
+                    // Sottoscrivi al topic dei sensori
+                    mqttClient?.subscribe(MQTT_TOPIC_SENSORS, 1)
+                    Log.d(TAG, "Subscribed to sensor data topic: $MQTT_TOPIC_SENSORS")
                 }
+
+                runOnUiThread {
+                    tvLastUpdate.text = "Connesso - In attesa dati..."
+                }
+
             } catch (e: Exception) {
                 Log.e(TAG, "Error connecting to MQTT", e)
+                runOnUiThread {
+                    tvLastUpdate.text = "Errore connessione"
+                }
+            }
+        }
+    }
+
+    private fun handleSensorData(payload: String) {
+        try {
+            val jsonData = JSONObject(payload)
+            val soilHumidity = jsonData.optDouble("umidita_terreno", -1.0)
+            val airHumidity = jsonData.optDouble("umidita_aria", -1.0)
+            val temperature = jsonData.optDouble("temperatura", -1.0)
+
+            runOnUiThread {
+                // Aggiorna umidità del terreno
+                if (soilHumidity >= 0) {
+                    tvSoilHumidity.text = "${soilHumidity.toInt()}%"
+                } else {
+                    tvSoilHumidity.text = "--"
+                }
+
+                // Aggiorna umidità dell'aria
+                if (airHumidity >= 0) {
+                    tvAirHumidity.text = "${airHumidity.toInt()}%"
+                } else {
+                    tvAirHumidity.text = "--"
+                }
+
+                // Aggiorna temperatura
+                if (temperature >= 0) {
+                    tvTemperature.text = "${temperature.toInt()}°C"
+                } else {
+                    tvTemperature.text = "--"
+                }
+
+                // Aggiorna timestamp ultimo aggiornamento
+                val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+                tvLastUpdate.text = "Aggiornato: $currentTime"
+
+                Log.d(TAG, "Sensor data updated - Soil: ${soilHumidity}%, Air: ${airHumidity}%, Temp: ${temperature}°C")
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing sensor data JSON", e)
+            runOnUiThread {
+                tvLastUpdate.text = "Errore dati sensori"
             }
         }
     }
@@ -400,7 +495,7 @@ class HomeActivity : AppCompatActivity() {
                     message.qos = 1
 
                     withContext(Dispatchers.IO) {
-                        mqttClient?.publish(MQTT_TOPIC, message)
+                        mqttClient?.publish(MQTT_TOPIC_SELECTION, message)
                     }
 
                     Log.d(TAG, "Plant selection sent via MQTT: $selectedPlant")
@@ -411,6 +506,12 @@ class HomeActivity : AppCompatActivity() {
                             Toast.LENGTH_LONG).show()
 
                         tvSelectedPlant.text = "Ultima selezione: $selectedPlant"
+
+                        // Reset dei dati sensori per la nuova pianta
+                        tvSoilHumidity.text = "--"
+                        tvAirHumidity.text = "--"
+                        tvTemperature.text = "--"
+                        tvLastUpdate.text = "In attesa dati..."
                     }
 
                 } catch (e: Exception) {
